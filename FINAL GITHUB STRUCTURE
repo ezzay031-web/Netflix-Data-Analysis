@@ -1,0 +1,5 @@
+Netflix-Data-Analysis/
+│── app.py
+│── requirements.txt
+│── README.md
+│── netflix.csv (optional)
