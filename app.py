@@ -7,31 +7,116 @@ import plotly.express as px
 # =========================
 st.set_page_config(
     page_title="Netflix Dashboard",
-    page_icon="",
+    page_icon="🎬",
     layout="wide"
 )
 
 # =========================
-#  NETFLIX STYLE UI
+#  NETFLIX THEME CSS (Dark + Red Accents)
 # =========================
 st.markdown(
     """
     <style>
+    /* Main background */
     .stApp {
-        background-color: #0e1117;
+        background-color: #141414;
+        color: #ffffff;
+        font-family: 'Netflix Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+
+    /* Headers & titles */
+    h1, h2, h3, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+        color: #e50914;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+
+    /* Metric cards */
+    [data-testid="stMetric"] {
+        background-color: #1f1f1f;
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        border-left: 4px solid #e50914;
+    }
+    [data-testid="stMetric"] label {
+        color: #b3b3b3 !important;
+        font-weight: 500;
+    }
+    [data-testid="stMetric"] .stMetricValue {
+        color: #ffffff !important;
+        font-size: 2rem !important;
+        font-weight: 700;
+    }
+
+    /* Sidebar (if used) */
+    .css-1d391kg, .css-12oz5g7 {
+        background-color: #0b0b0b;
+    }
+
+    /* Select boxes, text inputs, buttons */
+    .stSelectbox, .stTextInput, .stFileUploader {
+        background-color: #2a2a2a;
+        border-radius: 8px;
+        border: 1px solid #333333;
         color: white;
     }
-
-    h1, h2, h3 {
-        color: #e50914;
-        font-weight: bold;
+    .st-bw, .st-bx {
+        background-color: #2a2a2a;
+        color: white;
+    }
+    .stButton > button {
+        background-color: #e50914;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    .stButton > button:hover {
+        background-color: #f40612;
+        box-shadow: 0 0 8px #e50914;
+        transform: scale(1.02);
     }
 
-    .card {
-        background-color: #161b22;
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 10px;
+    /* Divider */
+    hr {
+        border-top: 1px solid #333333;
+    }
+
+    /* Sample titles section */
+    .sample-card {
+        background-color: #1f1f1f;
+        border-radius: 8px;
+        padding: 10px 15px;
+        margin-bottom: 8px;
+        border-left: 3px solid #e50914;
+    }
+
+    /* Info & success boxes */
+    .stAlert {
+        background-color: #1f1f1f;
+        border-left: 4px solid #e50914;
+        color: #e5e5e5;
+    }
+    .stSuccess {
+        background-color: #1a2a1a;
+        border-left-color: #00e5a0;
+    }
+
+    /* Dataframe / tables (if any) */
+    .dataframe {
+        background-color: #1f1f1f !important;
+        color: #e5e5e5 !important;
+        border-collapse: collapse;
+    }
+    .dataframe th {
+        background-color: #2a2a2a !important;
+        color: #e50914 !important;
+    }
+    .dataframe td {
+        border-color: #333 !important;
     }
     </style>
     """,
@@ -41,8 +126,8 @@ st.markdown(
 # =========================
 #  HEADER (Netflix Logo Style)
 # =========================
-st.markdown("<h1 style='text-align:center;'> Netflix Analytics Dashboard</h1>", unsafe_allow_html=True)
-st.write("Explore Netflix movies & TV shows like a pro dashboard")
+st.markdown("<h1 style='text-align:center;'>🎬 Netflix Analytics Dashboard</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#b3b3b3;'>Explore Netflix movies & TV shows like a pro dashboard</p>", unsafe_allow_html=True)
 
 # =========================
 #  UPLOAD DATA
@@ -57,7 +142,7 @@ if file:
     # =========================
     #  SEARCH BAR (NETFLIX STYLE)
     # =========================
-    search = st.text_input(" Search Movies or TV Shows")
+    search = st.text_input("🔍 Search Movies or TV Shows")
 
     if search:
         df = df[df['title'].str.contains(search, case=False, na=False)]
@@ -98,9 +183,17 @@ if file:
     st.divider()
 
     # =========================
-    #  TYPE DISTRIBUTION (INTERACTIVE)
+    #  TYPE DISTRIBUTION (INTERACTIVE) - Netflix Dark Theme for Plotly
     # =========================
     fig1 = px.histogram(df, x="type", color="type", title="Content Type Distribution")
+    fig1.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="#141414",
+        plot_bgcolor="#1f1f1f",
+        font=dict(color="#e5e5e5"),
+        title_font=dict(color="#e50914", size=20),
+        legend_title_font=dict(color="#e50914")
+    )
     st.plotly_chart(fig1, use_container_width=True)
 
     # =========================
@@ -110,6 +203,15 @@ if file:
     top_country.columns = ["country", "count"]
 
     fig2 = px.bar(top_country, x="country", y="count", title="Top 10 Countries")
+    fig2.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="#141414",
+        plot_bgcolor="#1f1f1f",
+        font=dict(color="#e5e5e5"),
+        title_font=dict(color="#e50914"),
+        xaxis=dict(title="Country", color="#b3b3b3"),
+        yaxis=dict(title="Number of Titles", color="#b3b3b3")
+    )
     st.plotly_chart(fig2, use_container_width=True)
 
     # =========================
@@ -119,29 +221,35 @@ if file:
     year_data.columns = ["year", "count"]
 
     fig3 = px.line(year_data, x="year", y="count", title="Content Over Years")
+    fig3.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="#141414",
+        plot_bgcolor="#1f1f1f",
+        font=dict(color="#e5e5e5"),
+        title_font=dict(color="#e50914"),
+        xaxis=dict(title="Release Year", color="#b3b3b3"),
+        yaxis=dict(title="Count", color="#b3b3b3")
+    )
     st.plotly_chart(fig3, use_container_width=True)
 
     # =========================
-    #  MOVIE POSTER THUMBNAILS (SIMULATED)
+    #  MOVIE POSTER THUMBNAILS (SIMULATED) - NETFLIX ROW STYLE
     # =========================
     st.subheader("🎬 Sample Titles")
+    st.markdown("---")
 
     for i in range(min(10, len(df))):
+        # Use columns to simulate a netflix row item
         col1, col2 = st.columns([1, 4])
-
         with col1:
-            st.markdown("")
-
+            st.markdown("🎞️")  # placeholder for poster icon
         with col2:
-            st.write(f"**{df.iloc[i]['title']}**")
-            st.write(f"{df.iloc[i]['type']} | {df.iloc[i]['release_year']} | {df.iloc[i]['country']}")
-
-        st.divider()
+            st.markdown(f"<div class='sample-card'><strong>{df.iloc[i]['title']}</strong><br>{df.iloc[i]['type']} | {df.iloc[i]['release_year']} | {df.iloc[i]['country']}</div>", unsafe_allow_html=True)
 
     # =========================
     #  SUCCESS
     # =========================
-    st.success("Netflix Dashboard Loaded Successfully ")
+    st.success("Netflix Dashboard Loaded Successfully 🍿")
 
 else:
-    st.info("Upload Netflix dataset to start analysis")
+    st.info("📂 Upload Netflix dataset to start analysis")
