@@ -24,11 +24,21 @@ st.markdown(
         font-family: 'Netflix Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
 
-    /* Headers & titles */
-    h1, h2, h3, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
-        color: #e50914;
-        font-weight: 700;
+    /* Headers & titles - improved visibility */
+    h1, h2, h3, .stSubheader, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+        color: #e50914 !important;
+        font-weight: 800 !important;
         letter-spacing: -0.5px;
+        text-shadow: 1px 1px 0px #00000080;
+    }
+
+    /* Make subheaders inside markdown also red & bold */
+    .stSubheader {
+        color: #e50914 !important;
+        font-size: 1.8rem !important;
+        border-left: 4px solid #e50914;
+        padding-left: 15px;
+        margin-top: 20px;
     }
 
     /* Metric cards */
@@ -40,13 +50,14 @@ st.markdown(
         border-left: 4px solid #e50914;
     }
     [data-testid="stMetric"] label {
-        color: #b3b3b3 !important;
-        font-weight: 500;
+        color: #e5e5e5 !important;   /* brighter than before */
+        font-weight: 600;
+        font-size: 1rem;
     }
     [data-testid="stMetric"] .stMetricValue {
         color: #ffffff !important;
-        font-size: 2rem !important;
-        font-weight: 700;
+        font-size: 2.2rem !important;
+        font-weight: 800;
     }
 
     /* Sidebar (if used) */
@@ -183,26 +194,35 @@ if file:
     st.divider()
 
     # =========================
-    #  TYPE DISTRIBUTION (INTERACTIVE) - Netflix Dark Theme for Plotly
+    #  TYPE DISTRIBUTION (INTERACTIVE) - NOW BARS ARE RED
     # =========================
-    fig1 = px.histogram(df, x="type", color="type", title="Content Type Distribution")
+    fig1 = px.histogram(
+        df, x="type", color="type",
+        title="Content Type Distribution",
+        color_discrete_sequence=["#e50914"]  # <-- Force all bars red
+    )
     fig1.update_layout(
         template="plotly_dark",
         paper_bgcolor="#141414",
         plot_bgcolor="#1f1f1f",
         font=dict(color="#e5e5e5"),
         title_font=dict(color="#e50914", size=20),
-        legend_title_font=dict(color="#e50914")
+        legend_title_font=dict(color="#e50914"),
+        showlegend=False  # not needed if only one color
     )
     st.plotly_chart(fig1, use_container_width=True)
 
     # =========================
-    #  TOP COUNTRIES
+    #  TOP COUNTRIES - BARS RED
     # =========================
     top_country = df["country"].value_counts().head(10).reset_index()
     top_country.columns = ["country", "count"]
 
-    fig2 = px.bar(top_country, x="country", y="count", title="Top 10 Countries")
+    fig2 = px.bar(
+        top_country, x="country", y="count",
+        title="Top 10 Countries",
+        color_discrete_sequence=["#e50914"]  # <-- Red bars
+    )
     fig2.update_layout(
         template="plotly_dark",
         paper_bgcolor="#141414",
@@ -215,7 +235,7 @@ if file:
     st.plotly_chart(fig2, use_container_width=True)
 
     # =========================
-    # RELEASE YEAR TREND
+    # RELEASE YEAR TREND - line chart (no bars)
     # =========================
     year_data = df["release_year"].value_counts().sort_index().reset_index()
     year_data.columns = ["year", "count"]
@@ -230,6 +250,7 @@ if file:
         xaxis=dict(title="Release Year", color="#b3b3b3"),
         yaxis=dict(title="Count", color="#b3b3b3")
     )
+    fig3.update_traces(line=dict(color="#e50914", width=3))  # red line
     st.plotly_chart(fig3, use_container_width=True)
 
     # =========================
@@ -239,16 +260,15 @@ if file:
     st.markdown("---")
 
     for i in range(min(10, len(df))):
-        # Use columns to simulate a netflix row item
         col1, col2 = st.columns([1, 4])
         with col1:
-            st.markdown("🎞️")  # placeholder for poster icon
+            st.markdown("🎞️")
         with col2:
-            st.markdown(f"<div class='sample-card'><strong>{df.iloc[i]['title']}</strong><br>{df.iloc[i]['type']} | {df.iloc[i]['release_year']} | {df.iloc[i]['country']}</div>", unsafe_allow_html=True)
+            st.markdown(
+                f"<div class='sample-card'><strong>{df.iloc[i]['title']}</strong><br>{df.iloc[i]['type']} | {df.iloc[i]['release_year']} | {df.iloc[i]['country']}</div>",
+                unsafe_allow_html=True
+            )
 
-    # =========================
-    #  SUCCESS
-    # =========================
     st.success("Netflix Dashboard Loaded Successfully 🍿")
 
 else:
