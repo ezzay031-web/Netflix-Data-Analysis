@@ -3,131 +3,145 @@ import pandas as pd
 import plotly.express as px
 
 # =========================
-# 🎯 PAGE CONFIG
+#  PAGE CONFIG
 # =========================
 st.set_page_config(
-    page_title="Netflix Analytics Dashboard",
-    page_icon="🎬",
+    page_title="Netflix Dashboard",
+    page_icon="",
     layout="wide"
 )
 
 # =========================
-# 🎨 PROFESSIONAL STYLE
+#  NETFLIX STYLE UI
 # =========================
-st.markdown("""
-<style>
-.stApp {
-    background-color: #0e1117;
-    color: white;
-}
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-color: #0e1117;
+        color: white;
+    }
 
-h1, h2, h3 {
-    color: #e50914;
-}
+    h1, h2, h3 {
+        color: #e50914;
+        font-weight: bold;
+    }
 
-.block-container {
-    padding: 2rem 3rem;
-}
-</style>
-""", unsafe_allow_html=True)
+    .card {
+        background-color: #161b22;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # =========================
-# 🎬 HEADER
+#  HEADER (Netflix Logo Style)
 # =========================
-st.title("🎬 Netflix Analytics Dashboard (Portfolio Project)")
-st.write("Built with Streamlit, Pandas, and Plotly")
+st.markdown("<h1 style='text-align:center;'> Netflix Analytics Dashboard</h1>", unsafe_allow_html=True)
+st.write("Explore Netflix movies & TV shows like a pro dashboard")
 
 # =========================
-# 📂 LOAD DATA
+#  UPLOAD DATA
 # =========================
-file = st.file_uploader("Upload Netflix CSV File", type=["csv"])
+file = st.file_uploader("Upload Netflix CSV file", type=["csv"])
 
 if file:
 
     df = pd.read_csv(file)
-    df.dropna(inplace=True)
+    df = df.dropna()
 
     # =========================
-    # 📌 SIDEBAR FILTERS
+    #  SEARCH BAR (NETFLIX STYLE)
     # =========================
-    st.sidebar.header("🔎 Filters")
+    search = st.text_input(" Search Movies or TV Shows")
 
-    content_type = st.sidebar.selectbox("Type", ["All"] + list(df["type"].unique()))
-    year = st.sidebar.selectbox("Release Year", ["All"] + sorted(df["release_year"].unique(), reverse=True))
-
-    if content_type != "All":
-        df = df[df["type"] == content_type]
-
-    if year != "All":
-        df = df[df["release_year"] == year]
+    if search:
+        df = df[df['title'].str.contains(search, case=False, na=False)]
 
     # =========================
-    # 📊 KPI DASHBOARD
+    #  FILTERS
     # =========================
-    st.subheader("📊 Key Metrics")
+    col1, col2, col3 = st.columns(3)
 
+    with col1:
+        type_filter = st.selectbox("Type", ["All"] + list(df["type"].unique()))
+
+    with col2:
+        year_filter = st.selectbox("Release Year", ["All"] + sorted(df["release_year"].unique(), reverse=True))
+
+    with col3:
+        country_filter = st.selectbox("Country", ["All"] + list(df["country"].dropna().unique())[:50])
+
+    # Apply filters
+    if type_filter != "All":
+        df = df[df["type"] == type_filter]
+
+    if year_filter != "All":
+        df = df[df["release_year"] == year_filter]
+
+    if country_filter != "All":
+        df = df[df["country"] == country_filter]
+
+    # =========================
+    #  KPI METRICS
+    # =========================
     col1, col2, col3 = st.columns(3)
 
     col1.metric("Total Titles", len(df))
-    col2.metric("Movies", (df["type"] == "Movie").sum())
-    col3.metric("TV Shows", (df["type"] == "TV Show").sum())
+    col2.metric("Movies", len(df[df["type"] == "Movie"]))
+    col3.metric("TV Shows", len(df[df["type"] == "TV Show"]))
 
     st.divider()
 
     # =========================
-    # 📊 TYPE DISTRIBUTION
+    #  TYPE DISTRIBUTION (INTERACTIVE)
     # =========================
-    st.subheader("🎭 Content Distribution")
-
-    fig1 = px.histogram(df, x="type", color="type")
+    fig1 = px.histogram(df, x="type", color="type", title="Content Type Distribution")
     st.plotly_chart(fig1, use_container_width=True)
 
     # =========================
-    # 🌍 TOP COUNTRIES
+    #  TOP COUNTRIES
     # =========================
-    st.subheader("🌍 Top 10 Countries")
+    top_country = df["country"].value_counts().head(10).reset_index()
+    top_country.columns = ["country", "count"]
 
-    country_df = df["country"].value_counts().head(10).reset_index()
-    country_df.columns = ["Country", "Count"]
-
-    fig2 = px.bar(country_df, x="Country", y="Count")
+    fig2 = px.bar(top_country, x="country", y="count", title="Top 10 Countries")
     st.plotly_chart(fig2, use_container_width=True)
 
     # =========================
-    # 📅 YEAR TREND
+    # RELEASE YEAR TREND
     # =========================
-    st.subheader("📅 Content Over Time")
+    year_data = df["release_year"].value_counts().sort_index().reset_index()
+    year_data.columns = ["year", "count"]
 
-    year_df = df["release_year"].value_counts().sort_index().reset_index()
-    year_df.columns = ["Year", "Count"]
-
-    fig3 = px.line(year_df, x="Year", y="Count")
+    fig3 = px.line(year_data, x="year", y="count", title="Content Over Years")
     st.plotly_chart(fig3, use_container_width=True)
 
     # =========================
-    # 📥 DOWNLOAD BUTTON
+    #  MOVIE POSTER THUMBNAILS (SIMULATED)
     # =========================
-    st.subheader("📥 Export Data")
+    st.subheader("🎬 Sample Titles")
 
-    csv = df.to_csv(index=False).encode('utf-8')
+    for i in range(min(10, len(df))):
+        col1, col2 = st.columns([1, 4])
 
-    st.download_button(
-        "Download Filtered Dataset",
-        csv,
-        "netflix_filtered_data.csv",
-        "text/csv"
-    )
+        with col1:
+            st.markdown("")
+
+        with col2:
+            st.write(f"**{df.iloc[i]['title']}**")
+            st.write(f"{df.iloc[i]['type']} | {df.iloc[i]['release_year']} | {df.iloc[i]['country']}")
+
+        st.divider()
 
     # =========================
-    # 🎬 DATA PREVIEW
+    #  SUCCESS
     # =========================
-    st.subheader("📋 Dataset Preview")
-    st.dataframe(df.head(), use_container_width=True)
-
-    st.success("Dashboard Ready 🚀 Portfolio Project Completed")
+    st.success("Netflix Dashboard Loaded Successfully ")
 
 else:
-    st.info("Upload dataset to start analysis")
-
- else:
     st.info("Upload Netflix dataset to start analysis")
