@@ -129,5 +129,5 @@ if file:
 else:
     st.info("Upload dataset to start analysis")
 
-else:
+ else:
     st.info("Upload Netflix dataset to start analysis")
