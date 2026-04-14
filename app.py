@@ -32,6 +32,22 @@ st.markdown(
         text-shadow: 1px 1px 0px #00000080;
     }
 
+    /* Sidebar headers - make them clearly visible */
+    .css-1d391kg h1, .css-1d391kg h2, .css-1d391kg h3, 
+    .css-12oz5g7 h1, .css-12oz5g7 h2, .css-12oz5g7 h3,
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+        color: #e50914 !important;
+        font-weight: 800 !important;
+    }
+
+    /* Sidebar labels and text */
+    .css-1d391kg .stSelectbox label, .css-12oz5g7 .stSelectbox label,
+    [data-testid="stSidebar"] .stSelectbox label,
+    [data-testid="stSidebar"] .stTextInput label {
+        color: #e5e5e5 !important;
+        font-weight: 600;
+    }
+
     /* Make subheaders inside markdown also red & bold */
     .stSubheader {
         color: #e50914 !important;
@@ -50,7 +66,7 @@ st.markdown(
         border-left: 4px solid #e50914;
     }
     [data-testid="stMetric"] label {
-        color: #e5e5e5 !important;   /* brighter than before */
+        color: #e5e5e5 !important;
         font-weight: 600;
         font-size: 1rem;
     }
@@ -60,12 +76,13 @@ st.markdown(
         font-weight: 800;
     }
 
-    /* Sidebar (if used) */
-    .css-1d391kg, .css-12oz5g7 {
+    /* Sidebar background */
+    [data-testid="stSidebar"] {
         background-color: #0b0b0b;
+        border-right: 1px solid #2a2a2a;
     }
 
-    /* Select boxes, text inputs, buttons */
+    /* Select boxes, text inputs, buttons in sidebar */
     .stSelectbox, .stTextInput, .stFileUploader {
         background-color: #2a2a2a;
         border-radius: 8px;
@@ -116,7 +133,7 @@ st.markdown(
         border-left-color: #00e5a0;
     }
 
-    /* Dataframe / tables (if any) */
+    /* Dataframe / tables */
     .dataframe {
         background-color: #1f1f1f !important;
         color: #e5e5e5 !important;
@@ -141,44 +158,45 @@ st.markdown("<h1 style='text-align:center;'>🎬 Netflix Analytics Dashboard</h1
 st.markdown("<p style='text-align:center; color:#b3b3b3;'>Explore Netflix movies & TV shows like a pro dashboard</p>", unsafe_allow_html=True)
 
 # =========================
-#  UPLOAD DATA
+#  SIDEBAR - Upload & Filters
 # =========================
-file = st.file_uploader("Upload Netflix CSV file", type=["csv"])
+with st.sidebar:
+    st.markdown("## 🎛️ Control Panel")
+    st.markdown("---")
+    
+    file = st.file_uploader("📂 Upload Netflix CSV file", type=["csv"])
+    
+    if file:
+        # Load data only after upload
+        df = pd.read_csv(file)
+        df = df.dropna()
+        
+        st.markdown("---")
+        st.markdown("### 🔍 Search & Filters")
+        
+        search = st.text_input("🔎 Search Movies or TV Shows")
+        
+        type_filter = st.selectbox("Type", ["All"] + list(df["type"].unique()))
+        year_filter = st.selectbox("Release Year", ["All"] + sorted(df["release_year"].unique(), reverse=True))
+        country_filter = st.selectbox("Country", ["All"] + list(df["country"].dropna().unique())[:50])
+    else:
+        # Placeholder when no file uploaded
+        st.info("Awaiting CSV file...")
+        df = None
 
-if file:
+st.divider()
 
-    df = pd.read_csv(file)
-    df = df.dropna()
-
-    # =========================
-    #  SEARCH BAR (NETFLIX STYLE)
-    # =========================
-    search = st.text_input("🔍 Search Movies or TV Shows")
-
+# =========================
+#  MAIN AREA - only if data is loaded
+# =========================
+if file and df is not None:
+    # Apply filters
     if search:
         df = df[df['title'].str.contains(search, case=False, na=False)]
-
-    # =========================
-    #  FILTERS
-    # =========================
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        type_filter = st.selectbox("Type", ["All"] + list(df["type"].unique()))
-
-    with col2:
-        year_filter = st.selectbox("Release Year", ["All"] + sorted(df["release_year"].unique(), reverse=True))
-
-    with col3:
-        country_filter = st.selectbox("Country", ["All"] + list(df["country"].dropna().unique())[:50])
-
-    # Apply filters
     if type_filter != "All":
         df = df[df["type"] == type_filter]
-
     if year_filter != "All":
         df = df[df["release_year"] == year_filter]
-
     if country_filter != "All":
         df = df[df["country"] == country_filter]
 
@@ -186,7 +204,6 @@ if file:
     #  KPI METRICS
     # =========================
     col1, col2, col3 = st.columns(3)
-
     col1.metric("Total Titles", len(df))
     col2.metric("Movies", len(df[df["type"] == "Movie"]))
     col3.metric("TV Shows", len(df[df["type"] == "TV Show"]))
@@ -194,12 +211,12 @@ if file:
     st.divider()
 
     # =========================
-    #  TYPE DISTRIBUTION (INTERACTIVE) - NOW BARS ARE RED
+    #  TYPE DISTRIBUTION (RED BARS)
     # =========================
     fig1 = px.histogram(
         df, x="type", color="type",
         title="Content Type Distribution",
-        color_discrete_sequence=["#e50914"]  # <-- Force all bars red
+        color_discrete_sequence=["#e50914"]
     )
     fig1.update_layout(
         template="plotly_dark",
@@ -208,12 +225,12 @@ if file:
         font=dict(color="#e5e5e5"),
         title_font=dict(color="#e50914", size=20),
         legend_title_font=dict(color="#e50914"),
-        showlegend=False  # not needed if only one color
+        showlegend=False
     )
     st.plotly_chart(fig1, use_container_width=True)
 
     # =========================
-    #  TOP COUNTRIES - BARS RED
+    #  TOP COUNTRIES (RED BARS)
     # =========================
     top_country = df["country"].value_counts().head(10).reset_index()
     top_country.columns = ["country", "count"]
@@ -221,7 +238,7 @@ if file:
     fig2 = px.bar(
         top_country, x="country", y="count",
         title="Top 10 Countries",
-        color_discrete_sequence=["#e50914"]  # <-- Red bars
+        color_discrete_sequence=["#e50914"]
     )
     fig2.update_layout(
         template="plotly_dark",
@@ -235,7 +252,7 @@ if file:
     st.plotly_chart(fig2, use_container_width=True)
 
     # =========================
-    # RELEASE YEAR TREND - line chart (no bars)
+    # RELEASE YEAR TREND (RED LINE)
     # =========================
     year_data = df["release_year"].value_counts().sort_index().reset_index()
     year_data.columns = ["year", "count"]
@@ -250,11 +267,11 @@ if file:
         xaxis=dict(title="Release Year", color="#b3b3b3"),
         yaxis=dict(title="Count", color="#b3b3b3")
     )
-    fig3.update_traces(line=dict(color="#e50914", width=3))  # red line
+    fig3.update_traces(line=dict(color="#e50914", width=3))
     st.plotly_chart(fig3, use_container_width=True)
 
     # =========================
-    #  MOVIE POSTER THUMBNAILS (SIMULATED) - NETFLIX ROW STYLE
+    #  SAMPLE TITLES (NETFLIX ROW STYLE)
     # =========================
     st.subheader("🎬 Sample Titles")
     st.markdown("---")
@@ -272,4 +289,4 @@ if file:
     st.success("Netflix Dashboard Loaded Successfully 🍿")
 
 else:
-    st.info("📂 Upload Netflix dataset to start analysis")
+    st.info("📂 Please upload a Netflix CSV file using the sidebar on the left.")
