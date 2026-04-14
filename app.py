@@ -1,97 +1,147 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
+import plotly.express as px
 
-# 🎬 Netflix Style UI (CSS)
+# =========================
+# 🎬 PAGE CONFIG
+# =========================
+st.set_page_config(
+    page_title="Netflix Dashboard",
+    page_icon="🎬",
+    layout="wide"
+)
+
+# =========================
+# 🎨 NETFLIX STYLE UI
+# =========================
 st.markdown(
     """
     <style>
     .stApp {
-        background-color: #000000;
-        color: #ffffff;
+        background-color: #0e1117;
+        color: white;
     }
 
     h1, h2, h3 {
         color: #e50914;
-        font-family: Arial;
+        font-weight: bold;
     }
 
-    .stFileUploader {
-        background-color: #111111;
-        border: 2px solid #e50914;
-        padding: 10px;
+    .card {
+        background-color: #161b22;
+        padding: 15px;
         border-radius: 10px;
-    }
-
-    .stDataFrame {
-        background-color: #111111;
-    }
-
-    div.stButton > button {
-        background-color: #e50914;
-        color: white;
-        border-radius: 8px;
-        border: none;
-        padding: 8px 16px;
-    }
-
-    div.stButton > button:hover {
-        background-color: #b00610;
-        color: white;
+        margin-bottom: 10px;
     }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# 🎬 Title
-st.title("🎬 Netflix Data Analysis Dashboard")
-st.write("Explore Netflix movies & TV shows like Netflix UI")
+# =========================
+# 🎬 HEADER (Netflix Logo Style)
+# =========================
+st.markdown("<h1 style='text-align:center;'>🎬 Netflix Analytics Dashboard</h1>", unsafe_allow_html=True)
+st.write("Explore Netflix movies & TV shows like a pro dashboard")
 
-# Upload dataset
-file = st.file_uploader("Upload your Netflix CSV file", type=["csv"])
+# =========================
+# 📂 UPLOAD DATA
+# =========================
+file = st.file_uploader("Upload Netflix CSV file", type=["csv"])
 
-if file is not None:
+if file:
+
     df = pd.read_csv(file)
-
-    st.subheader("📊 Data Preview")
-    st.write(df.head())
-
-    st.subheader("📌 Dataset Info")
-    st.write(df.describe())
-
-    # Missing values
-    st.subheader("❌ Missing Values")
-    st.write(df.isnull().sum())
-
-    # Clean data
     df = df.dropna()
 
-    # Type distribution
-    st.subheader("🎭 Content Type Distribution")
-    fig, ax = plt.subplots()
-    sns.countplot(x="type", data=df, ax=ax)
-    ax.set_facecolor("#111111")
-    st.pyplot(fig)
+    # =========================
+    # 🔎 SEARCH BAR (NETFLIX STYLE)
+    # =========================
+    search = st.text_input("🔎 Search Movies or TV Shows")
 
-    # Top countries
-    st.subheader("🌍 Top Content Countries")
-    top_countries = df['country'].value_counts().head(10)
+    if search:
+        df = df[df['title'].str.contains(search, case=False, na=False)]
 
-    fig, ax = plt.subplots()
-    top_countries.plot(kind='bar', ax=ax, color="#e50914")
-    plt.xticks(rotation=45)
-    st.pyplot(fig)
+    # =========================
+    # 🎯 FILTERS
+    # =========================
+    col1, col2, col3 = st.columns(3)
 
-    # Release year trend
-    st.subheader("📅 Content Over Years")
-    fig, ax = plt.subplots()
-    df['release_year'].value_counts().sort_index().plot(ax=ax, color="#e50914")
-    st.pyplot(fig)
+    with col1:
+        type_filter = st.selectbox("Type", ["All"] + list(df["type"].unique()))
 
-    st.success("🎉 Analysis completed successfully!")
+    with col2:
+        year_filter = st.selectbox("Release Year", ["All"] + sorted(df["release_year"].unique(), reverse=True))
+
+    with col3:
+        country_filter = st.selectbox("Country", ["All"] + list(df["country"].dropna().unique())[:50])
+
+    # Apply filters
+    if type_filter != "All":
+        df = df[df["type"] == type_filter]
+
+    if year_filter != "All":
+        df = df[df["release_year"] == year_filter]
+
+    if country_filter != "All":
+        df = df[df["country"] == country_filter]
+
+    # =========================
+    # 📊 KPI METRICS
+    # =========================
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric("Total Titles", len(df))
+    col2.metric("Movies", len(df[df["type"] == "Movie"]))
+    col3.metric("TV Shows", len(df[df["type"] == "TV Show"]))
+
+    st.divider()
+
+    # =========================
+    # 🎭 TYPE DISTRIBUTION (INTERACTIVE)
+    # =========================
+    fig1 = px.histogram(df, x="type", color="type", title="Content Type Distribution")
+    st.plotly_chart(fig1, use_container_width=True)
+
+    # =========================
+    # 🌍 TOP COUNTRIES
+    # =========================
+    top_country = df["country"].value_counts().head(10).reset_index()
+    top_country.columns = ["country", "count"]
+
+    fig2 = px.bar(top_country, x="country", y="count", title="Top 10 Countries")
+    st.plotly_chart(fig2, use_container_width=True)
+
+    # =========================
+    # 📅 RELEASE YEAR TREND
+    # =========================
+    year_data = df["release_year"].value_counts().sort_index().reset_index()
+    year_data.columns = ["year", "count"]
+
+    fig3 = px.line(year_data, x="year", y="count", title="Content Over Years")
+    st.plotly_chart(fig3, use_container_width=True)
+
+    # =========================
+    # 🎬 MOVIE POSTER THUMBNAILS (SIMULATED)
+    # =========================
+    st.subheader("🎬 Sample Titles")
+
+    for i in range(min(10, len(df))):
+        col1, col2 = st.columns([1, 4])
+
+        with col1:
+            st.markdown("🎬")
+
+        with col2:
+            st.write(f"**{df.iloc[i]['title']}**")
+            st.write(f"{df.iloc[i]['type']} | {df.iloc[i]['release_year']} | {df.iloc[i]['country']}")
+
+        st.divider()
+
+    # =========================
+    # 🎉 SUCCESS
+    # =========================
+    st.success("Netflix Dashboard Loaded Successfully 🎬")
 
 else:
-    st.info("📂 Please upload Netflix dataset CSV file to start analysis")
-    st.info("Please upload Netflix dataset CSV file to start analysis")
+    st.info("Upload Netflix dataset to start analysis")
